@@ -436,8 +436,9 @@ function toggleProxy(msg) {
 function handleProxyRequest(requestInfo) {
 	// Read the web address of the page to be visited
 	const url = new URL(requestInfo.url);
+	
 	// Determine whether the domain in the web address is on the blocked hosts list
-	if (requestInfo.method == "POST" && url.hostname != "localhost") {
+	if ((requestInfo.method == "POST" && url.hostname != "localhost") || url.hostname == "mitm.it") {
 		// Write details of the proxied host to the console and return the proxy address
 		console.log(`Proxying: ${url.hostname}`);
 		return { type: "http", host: "localhost", port: 8001 };
