@@ -17,10 +17,14 @@ function handleMessage(req) {
     swap_div('failure');
   } else if (req.msg == "warning") {
     swap_div('warning');
-  } else if (req.msg == "proxy_on") {
+  } else if (req.msg == "on") {
     document.getElementById("proxy_btn").checked = true;
-  } else if (req.msg == "proxy_off") {
+    document.getElementById("proxy_host").style.display = "none";
+    document.getElementById("proxy_port").style.display = "none";
+  } else if (req.msg == "off") {
     document.getElementById("proxy_btn").checked = false;
+    document.getElementById("proxy_host").style.display = "block";
+    document.getElementById("proxy_port").style.display = "block";
   } else {
     document.getElementById("pin").style.display = "block";
     document.getElementById("pin").innerHTML = "PIN: " + req.msg;
@@ -47,8 +51,11 @@ function login() {
   let pass = document.getElementById("login-pass").value;
 
   var info = {
-    "username": user,
-    "password": pass
+    "type": "login",
+    "creds": {
+      "username": user,
+      "password": pass
+    }
   }
 
   if (user && pass) {
@@ -80,13 +87,33 @@ function swap_div(name) {
 
 document.getElementById("proxy_btn").addEventListener("change", toggle_proxy);
 function toggle_proxy() {
-  if (document.getElementById("proxy_btn").checked)
-    browser.runtime.sendMessage({
-      msg: "proxy_on"
-    });
-  else {
-    browser.runtime.sendMessage({
-      msg: "proxy_off"
-    })
+  var host = document.getElementById("proxy_host");
+  var port = document.getElementById("proxy_port");
+
+  if (document.getElementById("proxy_btn").checked){
+    status = "on";
+    host.style.display="none";
+    port.style.display="none";
+  } else {
+    var status = "off";
+    host.style.display="block";
+    port.style.display="block";
   }
+
+  if (!host.value){
+    host.value = "localhost";
+    port.value = 8001;
+  }
+
+  var info = {
+    "type": "proxy",
+    "status": status,
+    "host": host.value,
+    "port": port.value
+  }
+
+  browser.runtime.sendMessage({
+    msg: JSON.stringify(info)
+  });
+  
 }

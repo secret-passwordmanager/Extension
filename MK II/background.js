@@ -1,8 +1,7 @@
 function createMenus() {
 	// create the menus
-	fields = ["username", "password", "email", "cc"]
-	sub_fields = ["visa", "mastercard", "american express", "discover"]
-
+	fields = ["username", "password", "email"]
+	
 	var i;
 	for (i = 0; i < fields.length; i++) {
 		browser.menus.create({
@@ -11,19 +10,6 @@ function createMenus() {
 			documentUrlPatterns: ["https://*/*", "http://*/*"],
 			contexts: ["editable"]
 		});
-
-		if (fields[i] == "cc") {
-			var j;
-			for (j = 0; j < sub_fields.length; j++) {
-				browser.menus.create({
-					id: sub_fields[j],
-					parentId: fields[i],
-					title: sub_fields[j],
-					documentUrlPatterns: ["https://*/*", "http://*/*"],
-					contexts: ["editable"]
-				});
-			}
-		}
 	}
 
 	browser.menus.create({
@@ -41,7 +27,6 @@ function createMenus() {
 }
 
 
-var token;
 var logged_in;
 var previous = "";
 
@@ -57,10 +42,6 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 
 	if (logged_in) {
 
-		if (info.parentMenuItemId == "cc") {
-			type = "cc";
-		}
-
 		switch (type) {
 			case "previous":
 				credentialType = 404;
@@ -69,23 +50,6 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 			case "password":
 				credentialType = 0;
 				value = makePassword();
-				break;
-			case "cc":
-				credentialType = 1;
-				switch(info.menuItemId) {
-					case "visa":
-						value = makeCC("visa");
-						break;
-					case "mastercard":
-						value = makeCC("discover");
-						break;
-					case "american express":
-						value = makeCC("express");
-						break;
-					case "discover":
-						value = makeCC("discover");
-						break;
-				}
 				break;
 			case "username":
 				credentialType = 2;
@@ -116,28 +80,28 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 
 	if (logged_in && credentialType != 404) {
 		new_pin = random4Digit();
-		var updatedSettings = {
-			token: token,
-			pin: new_pin
-		}
-		browser.storage.local.set(updatedSettings);
+		browser.storage.local.set({'pin': new_pin}, function() {
+			console.log("pin set to" + new_pin);
+		});
 		var json = {
 			FieldId: type,
 			RandToken: value,
 			domain: domain_from_url(tab.url),
 			type: credentialType,
-			AuthId: eval(new_pin)
+			AuthId: parseInt(new_pin, 10)
 		};
-		var bearer = 'Bearer ' + token;
-		fetch('http://localhost:8000/swap/new', {
-			method: 'POST',
-			withCredentials: true,
-			credentials: 'include',
-			headers: {
-				'Authorization': bearer,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(json)
+		browser.storage.local.get(['token'], function(result) {
+			var bearer = 'Bearer ' + result.token;
+			fetch('http://localhost:8000/swap/new', {
+				method: 'POST',
+				withCredentials: true,
+				credentials: 'include',
+				headers: {
+					'Authorization': bearer,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(json)
+			})
 		});
 	}
 });
@@ -145,59 +109,65 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 
 // identification credentials
 var defaultSettings = {
-	token: "none",
+	token: "null",
+	pin: "null",
+	status: "null",
+	proxy : "null"
 };
 
+const gettingStoredSettings = browser.storage.local.get();
+gettingStoredSettings.then(checkStoredSettings, onError);
 function checkStoredSettings(storedSettings) {
 	if (!storedSettings.token) {
 		browser.storage.local.set(defaultSettings);
 	}
 }
 
-const gettingStoredSettings = browser.storage.local.get();
-gettingStoredSettings.then(checkStoredSettings, onError);
+function checkPin(storedSettings) {
+	sendMsg(storedSettings.pin);
+}
+
+function checkProxy(storedSettings) {
+	sendMsg(storedSettings.status);
+}
 
 function onError(e) {
 	console.error(e);
 }
 
-function checkStatus(storedSettings) {
-	if (storedSettings.token == "none") {
-		sendMsg("login");
-	} else {
-		var noResponse = setTimeout(function () { sendMsg("failure"); }, 3500);
-		var url = "http://localhost:8000/swap/";
-		token = storedSettings.token;
-		var bearer = 'Bearer ' + token;
-		fetch(url, {
-			method: 'GET',
-			withCredentials: true,
-			credentials: 'include',
-			headers: {
-				'Authorization': bearer,
-				'Content-Type': 'application/json'
-			}
-		}).then(response => {
-			clearTimeout(noResponse);
-			if (response.ok) {
-				logged_in = true;
-				if (response.status == "204") {
-					sendMsg("success");
-				} else {
-					sendMsg("warning");
+function checkStatus() {
+	browser.storage.local.get(['token'], function(result) {
+		if (result.token == "null") {
+			sendMsg("login");
+		} else {
+			var noResponse = setTimeout(function () { sendMsg("failure"); }, 3500);
+			var url = "http://localhost:8000/swap/";
+			var bearer = 'Bearer ' + result.token;
+			fetch(url, {
+				method: 'GET',
+				withCredentials: true,
+				credentials: 'include',
+				headers: {
+					'Authorization': bearer,
+					'Content-Type': 'application/json'
 				}
-			} else {
-				sendMsg("failure");
-			}
-		});
-	}
+			}).then(response => {
+				clearTimeout(noResponse);
+				if (response.ok) {
+					logged_in = true;
+					if (response.status == "204") {
+						sendMsg("success");
+					} else {
+						sendMsg("warning");
+					}
+				} else {
+					sendMsg("failure");
+				}
+			});
+		}
+	});
 }
 
-function checkPin(storedSettings) {
-	if (storedSettings.pin) {
-		sendMsg(storedSettings.pin);
-	}
-}
 
 function login(info) {
 	var noResponse = setTimeout(function () { sendMsg("failure"); }, 3500);
@@ -216,47 +186,42 @@ function login(info) {
 		}
 	}).then(body => {
 		if (body) {
-			var updatedSettings = {
-				token: body.token,
-			};
-			browser.storage.local.set(updatedSettings);
-			checkStatus(updatedSettings);
+			browser.storage.local.set({'token': body.token}, function() {
+				console.log("token set to" + body.token);
+				checkStatus();
+			});
 		} else {
 			sendMsg("failure");
 		}
 	});
 }
 
-
+// popup communication
 function sendMsg(msg) {
 	browser.runtime.sendMessage({
 		msg: msg
 	});
 }
 
-// popup communication
 function handleMessage(request, sender, sendResponse) {
-	console.log("request from popup: " +
-		request.msg);
+	console.log("request from popup: " + request.msg);
 
 	if (request.msg == "check_status") {
 		const gettingStoredSettings = browser.storage.local.get();
 		gettingStoredSettings.then(checkStatus, onError);
 	} else if (request.msg == "check_proxy") {
-		if (proxy) {
-			sendMsg("proxy_on");
-		} else {
-			sendMsg("proxy_off");
-		}
-	} else if (request.msg == "proxy_on") {
-		toggleProxy(request.msg);
-	} else if (request.msg == "proxy_off") {
-		toggleProxy(request.msg);
+		const gettingStoredSettings = browser.storage.local.get();
+		gettingStoredSettings.then(checkProxy, onError);
 	} else if (request.msg == "check_pin") {
 		const gettingStoredSettings = browser.storage.local.get();
 		gettingStoredSettings.then(checkPin, onError);
 	} else {
-		login(request.msg);
+		var data = JSON.parse(request.msg);
+		if (data.type == "login"){
+			login(JSON.stringify(data.creds));
+		} else {
+			toggleProxy(data);
+		}		
 	}
 }
 
@@ -313,90 +278,6 @@ function makeEmail() {
 	return strEmail;
 }
 
-function makeCC(issuer) {
-	var pos;
-	var str = new Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	var sum = 0;
-	var final_digit = 0;
-	var t = 0;
-	var len_offset = 0;
-	var len = 0;
-	var issuer;
-
-	//
-	// Fill in the first values of the string based with the specified bank's prefix.
-	//
-
-	// Visa
-	if (issuer == "visa") {
-		str[0] = 4;
-		pos = 1;
-		len = 16;
-	}
-	// Mastercard
-	else if (issuer == "mastercard") {
-		str[0] = 5;
-		t = Math.floor(Math.random() * 5) % 5;
-		str[1] = 1 + t;	  // Between 1 and 5.
-		pos = 2;
-		len = 16;
-	}
-	// American Express
-	else if (issuer == "american express") {
-		str[0] = 3;
-		t = Math.floor(Math.random() * 4) % 4;
-		str[1] = 4 + t;	  // Between 4 and 7.
-		pos = 2;
-		len = 15;
-	}
-	// Discover
-	else if (issuer == "discover") {
-		str[0] = 6;
-		str[1] = 0;
-		str[2] = 1;
-		str[3] = 1;
-		pos = 4;
-		len = 16;
-	}
-
-	//
-	// Fill all the remaining numbers except for the last one with random values.
-	//
-
-	while (pos < len - 1) {
-		str[pos++] = Math.floor(Math.random() * 10) % 10;
-	}
-
-	//
-	// Calculate the Luhn checksum of the values thus far.
-	//
-
-	len_offset = (len + 1) % 2;
-	for (pos = 0; pos < len - 1; pos++) {
-		if ((pos + len_offset) % 2) {
-			t = str[pos] * 2;
-			if (t > 9) {
-				t -= 9;
-			}
-			sum += t;
-		}
-		else {
-			sum += str[pos];
-		}
-	}
-
-	//
-	// Choose the last digit so that it causes the entire string to pass the checksum.
-	//
-
-	final_digit = (10 - (sum % 10)) % 10;
-	str[len - 1] = final_digit;
-
-	// return the CC value
-	t = str.join('');
-	t = t.substr(0, len);
-	return t;
-}
 
 function domain_from_url(url) {
 	var result
@@ -419,16 +300,28 @@ function shuffle(o){
     return o;
 }
 
-// proxy
-var proxy = false;
+
 // Listen for a request to open a webpage
-function toggleProxy(msg) {
-	if (msg == "proxy_on") {
+function toggleProxy(data) {
+
+	browser.storage.local.set({'status': data.status}, function() {
+		console.log("proxy status set to" + data.status);
+	});
+	
+	var info = {
+		'host' : data.host,
+		'port' : data.port
+	}
+	info = JSON.stringify(info);
+
+	browser.storage.local.set({'proxy': info}, function() {
+		console.log("proxy set to" + info);
+	});
+
+	if (data.status == "on") {
 		browser.proxy.onRequest.addListener(handleProxyRequest, { urls: ["<all_urls>"] });
-		proxy = true;
 	} else {
 		browser.proxy.onRequest.removeListener(handleProxyRequest, { urls: ["<all_urls>"] });
-		proxy = false;
 	}
 }
 
@@ -436,13 +329,20 @@ function toggleProxy(msg) {
 function handleProxyRequest(requestInfo) {
 	// Read the web address of the page to be visited
 	const url = new URL(requestInfo.url);
+
+	browser.storage.local.get(['proxy'], function(result) {
+		var info = JSON.parse(result.proxy);
+		var prt = parseInt(info.port);
 	
-	// Determine whether the domain in the web address is on the blocked hosts list
-	if ((requestInfo.method == "POST" && url.hostname != "localhost") || url.hostname == "mitm.it") {
-		// Write details of the proxied host to the console and return the proxy address
-		console.log(`Proxying: ${url.hostname}`);
-		return { type: "http", host: "localhost", port: 8001 };
-	}
-	// Return instructions to open the requested webpage
-	return { type: "direct" };
+		// Determine whether the domain in the web address is on the blocked hosts list
+		if ((requestInfo.method == "POST" && url.hostname != "localhost") || url.hostname == "mitm.it") {
+			// Write details of the proxied host to the console and return the proxy address
+			console.log(`Proxying: ${url.hostname}`);
+			console.log(info.host);
+			console.log(prt);
+			return { type: "http", host: info.host, port: prt };
+		}
+		// Return instructions to open the requested webpage
+		return { type: "direct" };
+	});
 }
