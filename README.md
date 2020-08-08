@@ -1,12 +1,16 @@
 # SECRET Browser Extension
+This is the extension you will need to be able to use **SECRET** as a password manager
 
-## What it does ##
+## Installation
+### Prerequisites
+ - Install **Firefox** Browser
+ 
+1. Open Firefox and enter `about:debugging` in the url
+2. Click `This Firefox` on the left hand menu
+3. Click `Load Temporary Add-on...`
+4. Navigate to the root of this repo
+5. Double-Click on `manifest.json`
 
-Currently the extension is able to generate username/pass/email and send to server and wait for response. 
-
-In order to test, firefox is needed. Go to about:debugging -> this firefox -> load temporary addon.  
-
-From there, link to the manifest.json file along with the other files in the same directory and the extension should be loaded.
 
 ## How it All Works ##
 ### popup/* ### 
