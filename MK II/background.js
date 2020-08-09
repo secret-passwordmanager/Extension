@@ -340,7 +340,7 @@ function handleProxyRequest(requestInfo) {
 			console.log(`Proxying: ${url.hostname}`);
 			console.log(info.host);
 			console.log(prt);
-			return { type: "http", host: info.host, port: prt };
+			return { type: "http", host: "localhost", port: 8001 };
 		}
 		// Return instructions to open the requested webpage
 		return { type: "direct" };
