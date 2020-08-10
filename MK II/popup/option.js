@@ -19,12 +19,8 @@ function handleMessage(req) {
     swap_div('warning');
   } else if (req.msg == "on") {
     document.getElementById("proxy_btn").checked = true;
-    document.getElementById("proxy_host").style.display = "none";
-    document.getElementById("proxy_port").style.display = "none";
   } else if (req.msg == "off") {
     document.getElementById("proxy_btn").checked = false;
-    document.getElementById("proxy_host").style.display = "block";
-    document.getElementById("proxy_port").style.display = "block";
   } else {
     document.getElementById("pin").style.display = "block";
     document.getElementById("pin").innerHTML = "PIN: " + req.msg;
@@ -49,16 +45,18 @@ function login() {
 
   let user = document.getElementById("login-user").value;
   let pass = document.getElementById("login-pass").value;
+  let server = document.getElementById("server").value;
 
   var info = {
     "type": "login",
     "creds": {
       "username": user,
       "password": pass
-    }
+    },
+    "server": server 
   }
 
-  if (user && pass) {
+  if (user && pass && server) {
     swap_div('info');
     browser.runtime.sendMessage({
       msg: JSON.stringify(info)
@@ -78,7 +76,7 @@ function swap_div(name) {
   id.style.display      = "block";
 
   if (name == "failure") {
-    setTimeout(function () { swap_div("sign_in"); }, 2000);
+    setTimeout(function () { swap_div("sign-in"); }, 2000);
     document.getElementById("login_btn").addEventListener("click", login);
   } else if (name == "warning") {
     success.style.display = "block";
@@ -87,29 +85,16 @@ function swap_div(name) {
 
 document.getElementById("proxy_btn").addEventListener("change", toggle_proxy);
 function toggle_proxy() {
-  var host = document.getElementById("proxy_host");
-  var port = document.getElementById("proxy_port");
 
   if (document.getElementById("proxy_btn").checked){
     status = "on";
-    host.style.display="none";
-    port.style.display="none";
   } else {
-    var status = "off";
-    host.style.display="block";
-    port.style.display="block";
+    status = "off";
   }
-
-  if (!host.value){
-    host.value = "localhost";
-    port.value = 8001;
-  }
-
+  
   var info = {
     "type": "proxy",
-    "status": status,
-    "host": host.value,
-    "port": port.value
+    "status": status
   }
 
   browser.runtime.sendMessage({

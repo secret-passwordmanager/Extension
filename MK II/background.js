@@ -26,11 +26,10 @@ function createMenus() {
 	});
 }
 
+createMenus();
 
 var logged_in;
 var previous = "";
-
-createMenus();
 
 // fillout the values
 browser.menus.onClicked.addListener(async (info, tab) => {
@@ -90,9 +89,10 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 			type: credentialType,
 			AuthId: parseInt(new_pin, 10)
 		};
-		browser.storage.local.get(['token'], function(result) {
+		browser.storage.local.get(['token', 'server'], function(result) {
+			var url = "http://" + result.server + ":8000/swap/new";
 			var bearer = 'Bearer ' + result.token;
-			fetch('http://localhost:8000/swap/new', {
+			fetch(url, {
 				method: 'POST',
 				withCredentials: true,
 				credentials: 'include',
@@ -112,7 +112,7 @@ var defaultSettings = {
 	token: "null",
 	pin: "null",
 	status: "null",
-	proxy : "null"
+	server: "null"
 };
 
 const gettingStoredSettings = browser.storage.local.get();
@@ -136,12 +136,12 @@ function onError(e) {
 }
 
 function checkStatus() {
-	browser.storage.local.get(['token'], function(result) {
+	browser.storage.local.get(['token', 'server'], function(result) {
 		if (result.token == "null") {
 			sendMsg("login");
 		} else {
 			var noResponse = setTimeout(function () { sendMsg("failure"); }, 3500);
-			var url = "http://localhost:8000/swap/";
+			var url = "http://" + result.server + ":8000/swap/";
 			var bearer = 'Bearer ' + result.token;
 			fetch(url, {
 				method: 'GET',
@@ -169,14 +169,15 @@ function checkStatus() {
 }
 
 
-function login(info) {
+function login(creds, server) {
 	var noResponse = setTimeout(function () { sendMsg("failure"); }, 3500);
-	fetch('http://localhost:8000/user/authenticate', {
+	var url = "http://" + server + ":8000/user/authenticate";
+	fetch(url, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: info,
+		body: creds,
 	}).then(response => {
 		clearTimeout(noResponse);
 		if (response.ok) {
@@ -218,7 +219,10 @@ function handleMessage(request, sender, sendResponse) {
 	} else {
 		var data = JSON.parse(request.msg);
 		if (data.type == "login"){
-			login(JSON.stringify(data.creds));
+			browser.storage.local.set({'server': data.server}, function() {
+				console.log("server set to" + data.server);
+			login(JSON.stringify(data.creds), data.server);
+			});
 		} else {
 			toggleProxy(data);
 		}		
@@ -227,7 +231,63 @@ function handleMessage(request, sender, sendResponse) {
 
 browser.runtime.onMessage.addListener(handleMessage);
 
-// auxiliary
+var proxy_host = "null";
+// Listen for a request to open a webpage
+function toggleProxy(data) {
+
+	browser.storage.local.set({'status': data.status}, function() {
+		console.log("proxy status set to" + data.status);
+	});
+	
+	browser.storage.local.get('server', function(result) {
+		proxy_host = result.server;
+	});
+
+	if (data.status == "on") {
+		browser.proxy.onRequest.addListener(handleProxyRequest, { urls: ["<all_urls>"] });
+	} else {
+		browser.proxy.onRequest.removeListener(handleProxyRequest, { urls: ["<all_urls>"] });
+	}
+}
+
+
+// On the request to open a webpage
+function handleProxyRequest(requestInfo) {
+	// Read the web address of the page to be visited
+	const url = new URL(requestInfo.url);
+	
+	// Determine whether the domain in the web address is on the blocked hosts list
+	if ((requestInfo.method == "POST" && url.hostname != proxy_host) || url.hostname == "mitm.it") {
+		// Write details of the proxied host to the console and return the proxy address
+		console.log(`Proxying: ${url.hostname}`);
+		return { type: "http", host: proxy_host, port: 8001 };
+	}
+	// Return instructions to open the requested webpage
+	return { type: "direct" };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////
+//		AUXILARY FUNCTIONS	  //				
+////////////////////////////////
+
 function makeUsername() {
 	var length = 8,
 		charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -298,51 +358,4 @@ function random4Digit(){
 function shuffle(o){
     for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
-}
-
-
-// Listen for a request to open a webpage
-function toggleProxy(data) {
-
-	browser.storage.local.set({'status': data.status}, function() {
-		console.log("proxy status set to" + data.status);
-	});
-	
-	var info = {
-		'host' : data.host,
-		'port' : data.port
-	}
-	info = JSON.stringify(info);
-
-	browser.storage.local.set({'proxy': info}, function() {
-		console.log("proxy set to" + info);
-	});
-
-	if (data.status == "on") {
-		browser.proxy.onRequest.addListener(handleProxyRequest, { urls: ["<all_urls>"] });
-	} else {
-		browser.proxy.onRequest.removeListener(handleProxyRequest, { urls: ["<all_urls>"] });
-	}
-}
-
-// On the request to open a webpage
-function handleProxyRequest(requestInfo) {
-	// Read the web address of the page to be visited
-	const url = new URL(requestInfo.url);
-
-	browser.storage.local.get(['proxy'], function(result) {
-		var info = JSON.parse(result.proxy);
-		var prt = parseInt(info.port);
-	
-		// Determine whether the domain in the web address is on the blocked hosts list
-		if ((requestInfo.method == "POST" && url.hostname != "localhost") || url.hostname == "mitm.it") {
-			// Write details of the proxied host to the console and return the proxy address
-			console.log(`Proxying: ${url.hostname}`);
-			console.log(info.host);
-			console.log(prt);
-			return { type: "http", host: "localhost", port: 8001 };
-		}
-		// Return instructions to open the requested webpage
-		return { type: "direct" };
-	});
 }
