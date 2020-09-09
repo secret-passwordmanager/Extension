@@ -36,9 +36,6 @@ function switchView(viewName) {
    }
 }
 
-
-
-
 function logIn(username, password) {
 
    if (typeof username != 'string') {
@@ -57,9 +54,8 @@ function logIn(username, password) {
    chrome.runtime.sendMessage(loginMsg, (resp) => {
       if (!resp.error) {
          switchView('main');
-      }
-      else {
-         console.log(resp);
+      } else {
+         console.log(resp.msg);
       }
    });
 }
@@ -69,13 +65,9 @@ function autoLogin() {
       type: 'loginStatus'
    }
    chrome.runtime.sendMessage(loginStatusMsg, (resp) => {
-      console.log(resp)
-      if (resp.error) {
-         console.log('herere' + resp);
-         return;
-      }
+
       /* If resp.val is true, user is already logged in */
-      if (resp.val) {
+      if (resp.isLoggedIn) {
          switchView('main');
       } else {
          switchView('login');
@@ -83,21 +75,17 @@ function autoLogin() {
 
    })
 }
-
-
-
 //////////////////////////////////////////////
 ////////////////// Runtime ///////////////////
 //////////////////////////////////////////////
-var ids = {
-
-}
-console.log('hbh')
 autoLogin();
 
+/* See if user is already logged in. Add event listener to login button */
+//autoLogin();
 document.getElementById('loginBtn').addEventListener(
    'click', () => {
       logIn(document.getElementById('usernameInput').value, document.getElementById('passwordInput').value);
 
    }
 )
+
