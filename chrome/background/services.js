@@ -68,6 +68,6 @@ services.auth = {
    }
 };
 
-services.proxy = {
-   url: 'http://localhost:8080/Untrusted'
+services.swap = {
+   url: 'http://192.168.100.245:8080/Untrusted'
 }

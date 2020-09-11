@@ -5,7 +5,19 @@ var socket = null;
 var ioUntrusted = {
 
    connect: () => {
-      socket = io.connect(services.proxy.url);
+      chrome.storage.local.get(['jwt'], (storage) => {
+         console.log(storage);
+         console.log(services.swap.url);
+         if (typeof storage.jwt != 'string') {
+            return new Error('Cannot connect without a jwt');
+         }
+
+         socket = io.connect(services.swap.url, {
+            query: storage
+         });
+      });
+
+
 
    },
    emit: {
@@ -15,6 +27,7 @@ var ioUntrusted = {
        * our 
        */
       swapNew: (swap) => {
+
          if (typeof swap.domain != 'string') {
             throw new Error('swap.domain must be a string');
          }
@@ -27,7 +40,6 @@ var ioUntrusted = {
          if (typeof swap.credType != 'string') {
             throw new Error('swap.credType must be a string');
          }
-
          if (socket == null) {
             return new Error('Connection to swap service has not been made');
          }

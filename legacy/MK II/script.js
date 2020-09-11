@@ -24,5 +24,4 @@ if (inputField) {
 	inputField.dispatchEvent(event_5);
 	inputField.dispatchEvent(event_6);
 	inputField.dispatchEvent(event_7);
-
 }
