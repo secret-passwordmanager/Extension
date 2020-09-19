@@ -1,40 +1,35 @@
-
 /**
  * Description. This class handles everything
  * related to the context menu (the menu
  * that appears when you right click on a 
  * text field)
  * @designPattern pub-sub
- * @subscriptions [loginSuccess, loginFail]
  */
-class ContextMenu extends Subscriber {
+class ContextMenu extends PubSub {
 
    constructor() {
       /* Singleton design pattern */
       if (ContextMenu._instance) {
          return ContextMenu._instance;
       }
-      super();
+      super([
+         'contextMenuSwapReady'
+      ]);
       ContextMenu._instance = this;
 
       /* Subscribe this object to events */
-      let login = new LoginHandler();
-      login.subscribe(this);
+      new AuthHandler().subscribe(this);
    }
    
-   update(event) {
+   update(event, opts) {
       /* Check parameters */
       if (typeof event != 'string') {
          throw new Error('event must be a string');
       }
 
       switch (event) {
-         case 'loginSuccess':
+         case 'authLoginSuccess':
             this.#enableContextMenu();
-            break;
-            
-         case 'loginFail': 
-            console.log('not working');
             break;
       }
    }
@@ -74,50 +69,51 @@ class ContextMenu extends Subscriber {
    
       chrome.contextMenus.onClicked.addListener(async (info, tab) => {
    
-         let value = null;
+         let token = '';
+         let type = '';
+         let domain = new URL(tab.url).hostname;
+         console.log(domain);
          switch (info.menuItemId) {
             case credTypes.password:
-               value = genToken.password();
+               token = genToken.password();
+               type = 'password';
                break;
             case credTypes.username:
-               value = genToken.username();
+               token = genToken.username();
+               type = 'username';
                break;
             case credTypes.email:
-               value = genToken.email();
+               token = genToken.email();
+               type = 'email';
                break;
-            default:
-               console.log('Invalid menuItemId. Aborting. . .');
-               return;
          }
-         try {
-            let conn = ioUntrusted.connect();
-            console.log('gerererv');
-            console.log(conn);
-            if (conn instanceof Error) {
-               throw conn;
-            }
-         } catch(err) {
-            console.log(err.message);
-         }
-   
-   
-   
-         
-         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            chrome.tabs.sendMessage(tab.id, {val: value}, (resp) => {
-               console.log(resp);
-            })
-         })
-   
-      })
-   
-   
+         this.#newSwap(token, type, domain);
+      });
 
    }
 
+   /**
+	 * Description. 
+	 * @token {string} The random token for the swap
+	 * @type {string} The type of swap (password, credential, creditCard, or email) 
+	 */
+	#newSwap(token, type, domain) {
+		if (typeof token != 'string') {
+			throw new Error('Swap must have a token property that is a string');
+		}
+		if (type != 'password' && type != 'creditCard' && type != 'email' && type != 'username') {
+			throw new Error('Swap must have a type property that is a string');
+		}
+		if (typeof domain != 'string') {
+			throw new Error('Swap must have a domain property that is a string');
+		}
 
-
-
-
-
+		let swap = {
+			type: type,
+			token: token,
+			authId: 'A413', //TODO: Make it change
+			domain: domain
+		};
+		super.notify('contextMenuSwapReady', swap);
+	}
 }

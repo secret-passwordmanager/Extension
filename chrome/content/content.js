@@ -1,4 +1,3 @@
-
 // var inputField = chrome.contextMenus.getTargetElement(vars.input);
 // var value = vars.data;
 
@@ -34,7 +33,7 @@ document.addEventListener('contextmenu', (events) => {
 
 chrome.runtime.onMessage.addListener((req,sender, sendResp) => {
    console.log(req);
-   clickedEl.value = req.val;
+   clickedEl.value = req.token;
    console.log(clickedEl.value)
 
    sendResp({farewell:'bfd'})

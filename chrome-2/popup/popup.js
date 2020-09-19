@@ -36,7 +36,7 @@ function switchView(viewName) {
    }
 }
 
-function logIn(username, password) {
+function auth(username, password) {
 
    if (typeof username != 'string') {
       throw new Error('Username must be a string');
@@ -46,65 +46,52 @@ function logIn(username, password) {
    }
 
    let loginMsg = {
-      type: 'login',
+      type: 'auth',
       username: username,
       password: password
    }
 
-   chrome.runtime.sendMessage(loginMsg, (resp) => {
-     
-   });
+   chrome.runtime.sendMessage(loginMsg);
 }
 
-function autoLogin() {
+function AutoAuth() {
    let loginStatusMsg = {
-      type: 'autoLogin'
+      type: 'autoAuth'
    }
-   chrome.runtime.sendMessage(loginStatusMsg, (resp) => {
-
-      // /* If resp.val is true, user is already logged in */
-      // if (resp.isLoggedIn) {
-      //    switchView('main');
-      // } else {
-      //    switchView('login');
-      // }
-
-   })
+   chrome.runtime.sendMessage(loginStatusMsg, (res) => {
+      if (res.isLoggedIn) {
+         switchView('main');
+      }
+   });
 }
 //////////////////////////////////////////////
 ////////////////// Runtime ///////////////////
 //////////////////////////////////////////////
+
 chrome.runtime.onMessage.addListener(
    function(request, sender, sendResponse) {
-      switch(request.msg) {
-         case 'loginFail':
-            console.log('cant log in');
+      switch(request.event) {
+         case 'authLoginFail':
+            console.log('Cannot authorize. Probably invalid credentials');
             break;
          
-         case 'loginSuccess':
-            switchView('main');
-            break;
-         
-         case 'autoLogin':
-            console.log('autologin');
+         case 'authLoginSuccess':
             switchView('main');
             break;
 
-         default:
-            console.log('invalid message');
-            break;   
+         case 'authJwtRefreshFail':
+            console.log('ohh herere')
+            switchView('login');
+            break;
       }
    }
 );
+switchView('login');
+AutoAuth();
 
-autoLogin();
-
-/* See if user is already logged in. Add event listener to login button */
-//autoLogin();
 document.getElementById('loginBtn').addEventListener(
    'click', () => {
-      logIn(document.getElementById('usernameInput').value, document.getElementById('passwordInput').value);
-
+      auth(document.getElementById('usernameInput').value, document.getElementById('passwordInput').value);
    }
 )
 

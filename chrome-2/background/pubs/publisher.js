@@ -35,7 +35,7 @@ class Publisher {
             throw new Error('Each value in events array must be a string');
          }
       });
-      
+
       /* Copy events to be in #events set */
       this.#events = new Set(events);
    }
@@ -47,7 +47,7 @@ class Publisher {
     * @return {undefined} Returns nothing on success
     * @return {Error} Returns an error if the event does not exist 
     */
-   notify(event) {
+   notify(event, opts) {
       /* Run pre checks */
       if (typeof event != 'string') {
          throw new Error('event must be a string');
@@ -58,7 +58,7 @@ class Publisher {
 
       /* Update all subscribers */
       this.#subscribers.forEach((sub) => {
-         sub.update(event);
+         sub.update(event, opts);
       });
    }
 
@@ -71,7 +71,7 @@ class Publisher {
     * @return {Error} On errors
     */
    subscribe(subscriber) {
-      if (!(subscriber instanceof Subscriber)) {
+      if (!(subscriber instanceof Subscriber) && !(subscriber instanceof PubSub)) {
          throw new Error('subscriber must be derived from Subscriber class');
       } 
       if (this.#subscribers.indexOf(subscriber) != -1) {
@@ -80,7 +80,6 @@ class Publisher {
       }
 
       this.#subscribers.push(subscriber);
-      console.log(this.#subscribers);
    }
 
    /**
@@ -91,7 +90,7 @@ class Publisher {
     * @return {Error} On errors
     */
    unsubscribe(subscriber) {
-      if (!(subscriber instanceof Subscriber)) {
+      if (!(subscriber instanceof Subscriber) && !(subscriber instanceof PubSub)) {
          throw new Error('subscriber must be derived from Subscriber class');
       }
       if (typeof event != 'string') {

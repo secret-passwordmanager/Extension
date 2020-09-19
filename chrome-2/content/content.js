@@ -5,9 +5,9 @@ document.addEventListener('contextmenu', (events) => {
 });
 
 chrome.runtime.onMessage.addListener((req,sender, sendResp) => {
-   console.log(req);
-   clickedEl.value = req.val;
-   console.log(clickedEl.value)
-
-   sendResp({farewell:'bfd'})
+   switch(req.event) {
+      case 'contextMenuSwapReady':
+         clickedEl.value = req.opts.token;
+         break;
+   }
 });

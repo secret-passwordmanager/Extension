@@ -16,7 +16,7 @@ services.auth = {
     * @param {string} password user's password
     * @return {undefined} Returns void
     */
-   login: async (username, password) => {
+   login: (username, password) => {
       return fetch(services.auth.url + '/login', {
 
          method: 'POST',
@@ -30,45 +30,31 @@ services.auth = {
       })
       .then((resp) => {
          if (resp.ok) {
-            return resp.json().then(body => {
-               console.log(body);
-               if (typeof body.refreshToken != 'string') {
-                  return new Error('Could not log in. Invalid username or password maybe idk');
-               }
-               chrome.storage.local.set({'refreshToken': body.refreshToken});
+            return resp.json().then((body) => {
+               return body.refreshToken;
             });
-         } else {
-            console.log('in resp.error')
-            return new Error('Could not log in. Invalid username or password maybe idk');
          }
-      })
-      .catch((err) => {
-         return err;
       });
    },
 
    /**
     * Grab and store a new JWT using the refreshToken
     */
-   refresh: () => {
-      chrome.storage.local.get(['refreshToken'], (item) => {
-         fetch(services.auth.url + '/refresh', {
-            method: 'POST',
-            headers: {
-               'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-               refreshToken: item.refreshToken
-            })
+   refresh: (refreshToken) => {     
+      return fetch(services.auth.url + '/refresh', {
+         method: 'POST',
+         headers: {
+            'content-type': 'application/json'
+         },
+         body: JSON.stringify({
+            refreshToken: refreshToken
          })
-         .then((resp) => {
-            if (resp.ok) {
-               resp.json().then(body => {
-                  chrome.storage.local.set(body);
-               })
-            }
-         });
-      });
+      })
+      .then((resp) => {
+         if (resp.ok) {
+            return resp.json();
+         }
+      })
    }
 };
 

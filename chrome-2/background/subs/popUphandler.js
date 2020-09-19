@@ -6,9 +6,10 @@
  * patterns. It is a subscriber
  * 
  * @designPattern observer-subscriber
- * @subscriptions [loginSuccess, loginFail]
  */
 class PopUpHandler extends Subscriber {
+
+   #auth = false;
 
    constructor() {
       /* Singleton design pattern */
@@ -19,30 +20,32 @@ class PopUpHandler extends Subscriber {
       PopUpHandler._instance = this;
 
       /* Subscribe this object to events */
-      let login = new LoginHandler();
-      login.subscribe(this);
+      new AuthHandler().subscribe(this);
 
       /* Start listening for events from popup.js */
       this.#enableMessageListener();
    }
    
-   update(event) {
+   update(event, opts) {
       /* Check parameters */
       if (typeof event != 'string') {
          throw new Error('event must be a string');
       }
 
-      switch (event) {
-         case 'loginSuccess':
-            chrome.runtime.sendMessage({
-               msg: "loginSuccess",
-            });
-            break;
+      /* Pass the message to popup.js */
+      chrome.runtime.sendMessage({
+         event: event,
+         opts: opts
+      });
 
-         case 'loginFail': 
-            chrome.runtime.sendMessage({
-               msg: "loginFail" 
-            });
+      switch(event) {
+
+         case 'authLoginSuccess':
+            this.#auth = true;
+            break;
+         
+         case 'authLoginFail':
+            this.#auth = false;
             break;
       }
    }
@@ -54,15 +57,15 @@ class PopUpHandler extends Subscriber {
             if (typeof request.type != 'string') {
                sendResponse({Error: 'message must be object with param \'type\''});
             }
-            let loginHandler = new LoginHandler();
+            let authHandler = new AuthHandler();
             switch(request.type) {
          
                /**
                 * Description. popup.js will emit this event when a user clicks the 
                 * login button.
                 */
-               case 'login':
-                  loginHandler.login(request.username, request.password);
+               case 'auth':
+                  authHandler.login(request.username, request.password);
                   sendResponse({
                      error: false, 
                      msg:'received loginMsg'
@@ -73,10 +76,9 @@ class PopUpHandler extends Subscriber {
                 * Description. popup.js will emit this event to try and login
                 * automatically 
                 */
-               case 'autoLogin':
-                  loginHandler.autoLogin();
+               case 'autoAuth':
                   sendResponse({
-                     error: false, 
+                     isLoggedIn: this.#auth, 
                      msg:'received autoLoginMsg'
                   });
                   break;
