@@ -1,30 +1,25 @@
 
 /**
- * Description. This class handles
- * messaging the popUp. It adopts 
- * the singleton and observer design
- * patterns. It is a subscriber
- * @designPattern observer-subscriber
+ * Description. This class handles everything
+ * related to the context menu (the menu
+ * that appears when you right click on a 
+ * text field)
+ * @designPattern pub-sub
  * @subscriptions [loginSuccess, loginFail]
  */
-class ContentScriptHandler extends Subscriber {
+class ContextMenu extends Subscriber {
 
    constructor() {
-
       /* Singleton design pattern */
-      if (ContentScriptHandler._instance) {
-         return ContentScriptHandler._instance;
+      if (ContextMenu._instance) {
+         return ContextMenu._instance;
       }
       super();
+      ContextMenu._instance = this;
 
       /* Subscribe this object to events */
-      let loginHandler = new LoginHandler();
-      loginHandler.subscribe(this, 'loginSuccess');
-      loginHandler.subscribe(this, 'loginFail');
-
-
-
-      ContentScriptHandler._instance = this;
+      let login = new LoginHandler();
+      login.subscribe(this);
    }
    
    update(event) {
@@ -35,10 +30,9 @@ class ContentScriptHandler extends Subscriber {
 
       switch (event) {
          case 'loginSuccess':
-            console.log('loginSuccess from contentScriptHandler');
             this.#enableContextMenu();
             break;
-
+            
          case 'loginFail': 
             console.log('not working');
             break;

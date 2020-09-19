@@ -52,32 +52,51 @@ function logIn(username, password) {
    }
 
    chrome.runtime.sendMessage(loginMsg, (resp) => {
-      if (!resp.error) {
-         switchView('main');
-      } else {
-         console.log(resp.msg);
-      }
+     
    });
 }
 
 function autoLogin() {
    let loginStatusMsg = {
-      type: 'loginStatus'
+      type: 'autoLogin'
    }
    chrome.runtime.sendMessage(loginStatusMsg, (resp) => {
 
-      /* If resp.val is true, user is already logged in */
-      if (resp.isLoggedIn) {
-         switchView('main');
-      } else {
-         switchView('login');
-      }
+      // /* If resp.val is true, user is already logged in */
+      // if (resp.isLoggedIn) {
+      //    switchView('main');
+      // } else {
+      //    switchView('login');
+      // }
 
    })
 }
 //////////////////////////////////////////////
 ////////////////// Runtime ///////////////////
 //////////////////////////////////////////////
+chrome.runtime.onMessage.addListener(
+   function(request, sender, sendResponse) {
+      switch(request.msg) {
+         case 'loginFail':
+            console.log('cant log in');
+            break;
+         
+         case 'loginSuccess':
+            switchView('main');
+            break;
+         
+         case 'autoLogin':
+            console.log('autologin');
+            switchView('main');
+            break;
+
+         default:
+            console.log('invalid message');
+            break;   
+      }
+   }
+);
+
 autoLogin();
 
 /* See if user is already logged in. Add event listener to login button */

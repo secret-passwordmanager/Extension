@@ -6,7 +6,7 @@
 
 class Publisher {
 
-   /**
+   /** TODO: probably dont need subscribers to be key-value, but just 1-D array. hopefully u remember what u meant
     * Description. A map that holds all of the 
     * subscribers for all valid events
     * @key {string} A string that is a valid event
@@ -14,8 +14,8 @@ class Publisher {
     * @values {array} Returns an array of all objects
     * subscribed to this event
     */
-   #subscribers;
-
+   #subscribers = [];
+   #events;
    /**
     * Description. Creates a publisher that can notify
     * any objects that have subscribed to it that certain
@@ -28,19 +28,16 @@ class Publisher {
       if (!Array.isArray(events)) {
          throw new Error('events must be an array of all valid events');
       }
-      /* Initialize subscribers */
-      this.#subscribers = new Map();
-      
-      /* Set up subscribers */
+
+      /* Make sure events is an array of strings */
       events.forEach(event => {
          if (typeof event != 'string') {
             throw new Error('Each value in events array must be a string');
          }
-         if (typeof this.#subscribers.get(event) != 'undefined') {
-            throw new Error('Duplicate event in events array found. Check your input');
-         }
-         this.#subscribers.set(event, []);
       });
+      
+      /* Copy events to be in #events set */
+      this.#events = new Set(events);
    }
 
    /**
@@ -51,60 +48,49 @@ class Publisher {
     * @return {Error} Returns an error if the event does not exist 
     */
    notify(event) {
+      /* Run pre checks */
       if (typeof event != 'string') {
          throw new Error('event must be a string');
       }
-
-      /* Grab the current subs to this event. */
-      let eventSubs = this.#subscribers.get(event);
-      console.log(eventSubs);
-      if (!Array.isArray(eventSubs)) {
-         return new Error('This publisher does not have this event');
+      if (!this.#events.has(event)){
+         throw new Error('This publisher does not have this event');
       }
 
-      eventSubs.forEach((sub) => {
+      /* Update all subscribers */
+      this.#subscribers.forEach((sub) => {
          sub.update(event);
       });
    }
 
    /**
     * Description. Allows instances of the subscriber
-    * class to subscribe to an event that the publisher
+    * class to subscribe to this publisher
     * has
     * @param {Subscriber} subscriber 
-    * @param {string} event 
     * @return {undefined} On success
     * @return {Error} On errors
     */
-   subscribe(subscriber, event) {
+   subscribe(subscriber) {
       if (!(subscriber instanceof Subscriber)) {
          throw new Error('subscriber must be derived from Subscriber class');
-      }
-      if (typeof event != 'string') {
-         throw new Error('event must be a string');
+      } 
+      if (this.#subscribers.indexOf(subscriber) != -1) {
+         console.log('bfadfdafdsa')
+         throw new Error('This subscriber is already subscribed');
       }
 
-
-      /* Grab the current subs to this event. */
-      let eventSubs = this.#subscribers.get(event);
-      if (!Array.isArray(eventSubs)) {
-         return new Error('This publisher does not have this event');
-      }
-      /* Add the subscriber and update the map */
-      eventSubs.push(subscriber);
-      this.#subscribers.set(event, eventSubs);
+      this.#subscribers.push(subscriber);
+      console.log(this.#subscribers);
    }
 
    /**
     * Description. Allows instances of the subscriber
-    * class to unsubscribe to an event that they had
-    * previously subscribed to
+    * class to unsubscribe to this publisher
     * @param {Subscriber} subscriber 
-    * @param {string} event 
     * @return {undefined} On success
     * @return {Error} On errors
     */
-   unsubscribe(subscriber, event) {
+   unsubscribe(subscriber) {
       if (!(subscriber instanceof Subscriber)) {
          throw new Error('subscriber must be derived from Subscriber class');
       }
@@ -112,19 +98,8 @@ class Publisher {
          throw new Error('event must be a string');
       }
 
-      /* Grab the current subs to this event. */
-      let eventSubs = this.#subscribers.get(event);
-      if (!Array.isArray(eventSubs)) {
-         return new Error('This publisher does not have this event');
-      }
-
-      let index = eventSubs.indexOf(subscriber);
-      if (index == -1) {
-         return new Error('This subscriber could not be found');
-      }
-      /* Delete and update the array */
-      eventSubs.splice(index, 1);
-      console.log(eventSubs);
-      this.#subscribers.set(event, eventSubs);
+      /* Delete this subscriber */
+      subIndex = this.#subscribers.indexOf(subscriber);
+      this.#subscribers.splice(subIndex, 1);
    }
 }
