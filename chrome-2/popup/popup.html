@@ -2,6 +2,8 @@
 <html>
    <head>
       <meta charset="utf-8">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+      <link rel="stylesheet" href="reset.css" />
       <link rel="stylesheet" href="popup.css" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700"/>
 
@@ -10,13 +12,23 @@
 
    <div id="loginView">
       <div class="settingsBtn"></div>
-      <input type="text" placeholder="Username" id="usernameInput" value="martin">
-      <input type="password" placeholder="Password" id="passwordInput" value="c0cac0la">
+      <input type="text" placeholder="Username" id="usernameInput" value="Presley.Willms">
+      <input type="password" placeholder="Password" id="passwordInput" value="AOQpSKF5ryWjxhm">
       <button type="button" id="loginBtn">Login</button>
    </div>
 
    <div id="mainView">
-      <h1>MAIN VIEW</h1>
+
+      <nav>
+         <button id="btnSettings" class="fa fa-cog" class="btn"></button>
+         <button id="btnLogOut" class="fa fa-sign-out"></button>
+      </nav>
+      
+      <div id="swaps">
+         <h1 class="swapsTitle">Pending Swaps</h1>
+
+      </div>
+
    </div>
 
    <div id="settingsView">

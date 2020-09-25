@@ -92,6 +92,7 @@ class AuthHandler extends Publisher {
                });
             } else {
                chrome.storage.local.set(jwt);
+               super.notify('authJwtRefreshSuccess', null);
             }
          })
          .catch((err) => {

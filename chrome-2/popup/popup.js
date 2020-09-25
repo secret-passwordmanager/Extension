@@ -1,6 +1,12 @@
 'use strict';
-
-
+/* 
+let swaps = [];
+swaps.push({
+   domain: 'google.com',
+   token: 'fdanjvda',
+   type: 'password',
+   authId: 'Ab2C'
+}) */
 //////////////////////////////////////////////
 //////////// Function Declarations ///////////
 //////////////////////////////////////////////
@@ -61,12 +67,64 @@ function AutoAuth() {
    chrome.runtime.sendMessage(loginStatusMsg, (res) => {
       if (res.isLoggedIn) {
          switchView('main');
+
       }
    });
 }
+
+function getSwaps() {
+   let getSwapMsg = {
+      type: 'getSwaps'
+   }
+   chrome.runtime.sendMessage(getSwapMsg, (res) => {
+
+      let swaps = [];
+/* swaps.push({
+   domain: 'google.com',
+   token: 'fdanjvda',
+   type: 'password',
+   authId: 'Ab2C'
+}); */
+      swaps = res;
+      console.log(swaps);
+      console.log(res);
+      swaps.forEach(swap => {
+
+         let swapWrapper = document.createElement('div');
+         swapWrapper.classList.add('swapWrapper');
+
+         let subWrapper = document.createElement('div');
+         subWrapper.classList.add('swapSubWrapper');
+
+         let divDomain = document.createElement('div');
+         divDomain.innerHTML = '<h3>' + swap.domain +'</h3>';
+         divDomain.classList.add('swapDomain');
+         subWrapper.appendChild(divDomain);
+
+         let divType = document.createElement('div');
+         divType.innerHTML = '<h3>' + swap.type +'</h3>';
+         divType.classList.add('swapType');
+         subWrapper.appendChild(divType);
+
+         swapWrapper.appendChild(subWrapper);
+
+         let divAuthId = document.createElement('div');
+         divAuthId.innerHTML = '<h2>' + swap.authId +'</h2>';
+         divAuthId.classList.add('swapAuthId');
+         swapWrapper.appendChild(divAuthId);
+
+
+         document.getElementById('swaps').appendChild(swapWrapper);
+
+      });
+   });
+}
+
+
 //////////////////////////////////////////////
 ////////////////// Runtime ///////////////////
 //////////////////////////////////////////////
+
 
 chrome.runtime.onMessage.addListener(
    function(request, sender, sendResponse) {
@@ -83,11 +141,28 @@ chrome.runtime.onMessage.addListener(
             console.log('ohh herere')
             switchView('login');
             break;
+
+         case 'ioSwapApproved':
+            swaps.splice(swaps.indexOf(request.opts), 1);
+            break;
+
+         case 'ioSwapDenied':
+            swaps.splice(swaps.indexOf(request.opts), 1);
+            break;
+
+         case 'ioSwapSubmitted':
+            swaps.push(opts);
+            break;
+                 
       }
    }
 );
 switchView('login');
-AutoAuth();
+
+AutoAuth()
+console.log('yo')
+getSwaps();
+
 
 document.getElementById('loginBtn').addEventListener(
    'click', () => {

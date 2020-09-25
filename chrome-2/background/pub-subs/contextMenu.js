@@ -68,11 +68,9 @@ class ContextMenu extends PubSub {
       });
    
       chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-   
          let token = '';
          let type = '';
          let domain = new URL(tab.url).hostname;
-         console.log(domain);
          switch (info.menuItemId) {
             case credTypes.password:
                token = genToken.password();

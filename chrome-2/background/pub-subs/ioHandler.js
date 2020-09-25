@@ -15,15 +15,18 @@ class IoHandler extends PubSub {
 		}
 		super([
 			'ioNewTrustedConn',
-			'ioNewTrustedDiscon',
+			'ioNewTrustedDisconn',
 			'ioSwapQueueEmpty',
+			'ioSwapSubmitted',
 			'ioSwapApproved',
-			'ioSwapDenied'
+			'ioSwapDenied',
+			'ioSwapError'
 		]);
 		IoHandler._instance = this;
 
 		/* Subscribe to events */
 		new ContextMenu().subscribe(this);
+		new AuthHandler().subscribe(this);
 	}
 
 	update(event, opts) {
@@ -33,11 +36,12 @@ class IoHandler extends PubSub {
 		}
 
 		switch (event) {
+			case 'authJwtRefreshSuccess':
+				this.#connect();
+				break;
+
+
 			case 'contextMenuSwapReady':
-				if (this.#socket == null) {
-					this.#connect();
-				}
-				++this.#numSwaps;
 				this.#submitSwap(opts);
 				break;
 		}
@@ -47,13 +51,35 @@ class IoHandler extends PubSub {
 		if (this.#socket === null) {
 			return new Error('No connection to swapman');
 		}
+		try {
+			this.#socket.emit('swapNew', swap);
+			super.notify('ioSwapSubmitted', swap);
+		}
+		catch(err) {
+			super.notify('ioSwapError', err.message);
+			return err;
+		}
 
-		this.#socket.emit('swapNew', swap);
+	}
+
+	getNumSwaps() {
+		if (this.#socket === null) {
+			return new Error('No connection to swapman');
+		}
+		this.#socket.emit('swapsNumPending', (numSwaps) => {
+			return numSwaps;
+		});
 	}
 
 	#connect() {
+
+		/* If already connected, don't do anything */
+		if (this.#socket != null) {
+			console.log('socket is not null')
+			return;
+		}
+
 		chrome.storage.local.get(['jwt'], (storage) => {
-         console.log(storage);
 
          if (typeof storage.jwt != 'string') {
             return new Error('Cannot connect without a jwt');
@@ -66,12 +92,24 @@ class IoHandler extends PubSub {
 				super.notify('ioNewTrustedConn', null);
 			});
 			this.#socket.on('connectionDisconnect', () => {
-				super.notify('ioNewTrustedDisConn', null);
+				super.notify('ioNewTrustedDisconn', null);
 			});
 			this.#socket.on('swapEmpty', () => {
 				super.notify('ioSwapQueueEmpty');
+			});
+			this.#socket.on('err', (error) => {
+				super.notify('ioSwapError');
+				console.log(error);
+			});
+			this.#socket.on('swapApproved', (swap) => {
+				super.notify('ioSwapApproved', swap);
 			})
+			this.#socket.on('swapDenied', (swap) => {
+				super.notify('ioSwapDenied', swap);
+			})
+		
+
       });
 	}
 
-}``
+}

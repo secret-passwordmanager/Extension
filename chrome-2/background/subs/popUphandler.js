@@ -10,6 +10,7 @@
 class PopUpHandler extends Subscriber {
 
    #auth = false;
+   #swaps = [];
 
    constructor() {
       /* Singleton design pattern */
@@ -21,6 +22,8 @@ class PopUpHandler extends Subscriber {
 
       /* Subscribe this object to events */
       new AuthHandler().subscribe(this);
+      new IoHandler().subscribe(this);
+      new ContextMenu().subscribe(this);
 
       /* Start listening for events from popup.js */
       this.#enableMessageListener();
@@ -47,6 +50,26 @@ class PopUpHandler extends Subscriber {
          case 'authLoginFail':
             this.#auth = false;
             break;
+
+         
+         case 'contextMenuSwapReady':
+            break;
+         
+         case 'ioNewTrustedConn':
+            console.log('here');
+
+         case 'ioSwapApproved':
+            this.#swaps.splice(this.#swaps.indexOf(opts), 1);
+            break;
+
+         case 'ioSwapDenied':
+            this.#swaps.splice(this.#swaps.indexOf(opts), 1);
+            break;
+
+         case 'ioSwapSubmitted':
+            this.#swaps.push(opts);
+            break;
+              
       }
    }
 
@@ -82,6 +105,9 @@ class PopUpHandler extends Subscriber {
                      msg:'received autoLoginMsg'
                   });
                   break;
+
+               case 'getSwaps':
+                  sendResponse(this.#swaps);
 
                /**
                 * Description. If the type did match any of the previous cases,
