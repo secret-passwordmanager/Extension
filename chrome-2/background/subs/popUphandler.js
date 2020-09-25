@@ -23,7 +23,6 @@ class PopUpHandler extends Subscriber {
       /* Subscribe this object to events */
       new AuthHandler().subscribe(this);
       new IoHandler().subscribe(this);
-      new ContextMenu().subscribe(this);
 
       /* Start listening for events from popup.js */
       this.#enableMessageListener();
@@ -50,13 +49,13 @@ class PopUpHandler extends Subscriber {
          case 'authLoginFail':
             this.#auth = false;
             break;
-
          
-         case 'contextMenuSwapReady':
+         case 'authLogoutSuccess':
+            this.#auth = false;
             break;
-         
+
          case 'ioNewTrustedConn':
-            console.log('here');
+            break;
 
          case 'ioSwapApproved':
             this.#swaps.splice(this.#swaps.indexOf(opts), 1);
@@ -87,7 +86,7 @@ class PopUpHandler extends Subscriber {
                 * Description. popup.js will emit this event when a user clicks the 
                 * login button.
                 */
-               case 'auth':
+               case 'login':
                   authHandler.login(request.username, request.password);
                   sendResponse({
                      error: false, 
@@ -99,7 +98,7 @@ class PopUpHandler extends Subscriber {
                 * Description. popup.js will emit this event to try and login
                 * automatically 
                 */
-               case 'autoAuth':
+               case 'loginAuto':
                   sendResponse({
                      isLoggedIn: this.#auth, 
                      msg:'received autoLoginMsg'
@@ -108,7 +107,15 @@ class PopUpHandler extends Subscriber {
 
                case 'getSwaps':
                   sendResponse(this.#swaps);
+                  break;
 
+               case 'logout':
+                  authHandler.logout();
+                  sendResponse({
+                     isLoggedIn: this.#auth, 
+                     msg:'received logoutMsg'
+                  });
+                  break;
                /**
                 * Description. If the type did match any of the previous cases,
                 * just return a response with error set to true and an 

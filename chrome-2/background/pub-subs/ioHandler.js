@@ -40,6 +40,9 @@ class IoHandler extends PubSub {
 				this.#connect();
 				break;
 
+			case 'authLogoutSuccess':
+				this.#disconnect();
+				break;
 
 			case 'contextMenuSwapReady':
 				this.#submitSwap(opts);
@@ -102,14 +105,27 @@ class IoHandler extends PubSub {
 				console.log(error);
 			});
 			this.#socket.on('swapApproved', (swap) => {
+			
 				super.notify('ioSwapApproved', swap);
-			})
+			});
 			this.#socket.on('swapDenied', (swap) => {
+				console.log('swap was denied');
 				super.notify('ioSwapDenied', swap);
-			})
-		
-
-      });
+			});
+	  	});
 	}
 
+	#disconnect() {
+		 
+		/* If socket is already connected, return */
+		if (this.#socket == null) {
+			return;
+		}
+		try {
+			this.#socket.disconnect();
+			this.#socket = null;
+		} catch(err) {
+			console.log('couldn\'t disconnect socket');
+		}
+	}
 }

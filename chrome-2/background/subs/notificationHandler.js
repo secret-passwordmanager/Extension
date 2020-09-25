@@ -27,12 +27,12 @@ class NotificationHandler extends Subscriber {
 				notTitle = 'Authorization Fail';
 				break;
 
-			case 'authLoginSucces':
-				notTitle = 'Authorization Success';
+			case 'authLogoutFail':
+				notTitle = 'Logout Fail';
 				break;
 
 			case 'authJwtRefreshFail':
-				notTitle = 'Authorization Fail';	
+				notTitle = 'Refresh JWT Fail';	
 				break;
 
 			case 'ioNewTrustedConn':

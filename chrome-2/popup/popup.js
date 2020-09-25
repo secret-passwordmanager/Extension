@@ -1,12 +1,5 @@
 'use strict';
-/* 
-let swaps = [];
-swaps.push({
-   domain: 'google.com',
-   token: 'fdanjvda',
-   type: 'password',
-   authId: 'Ab2C'
-}) */
+
 //////////////////////////////////////////////
 //////////// Function Declarations ///////////
 //////////////////////////////////////////////
@@ -21,48 +14,43 @@ function switchView(viewName) {
    let main = document.getElementById('mainView');
    let settings = document.getElementById('settingsView');
 
+   let settingsBtn = document.getElementById('btnSettings');
+   let logoutBtn = document.getElementById('btnLogout');
+   let homeBtn = document.getElementById('btnHome');
+
    switch (viewName) {
       case 'login':
          login.style.display = 'block';
          main.style.display = 'none';
          settings.style.display = 'none';
+         logoutBtn.style.display = 'none';
+         settingsBtn.style.display = 'block';
+         homeBtn.style.display = 'none';
          break;
       case 'main':
          login.style.display = 'none';
          main.style.display = 'block';
          settings.style.display = 'none';
+         logoutBtn.style.display = 'block';
+         settingsBtn.style.display = 'block';
+         homeBtn.style.display = 'none';
          break;
       case 'settings':
          login.style.display = 'none';
          main.style.display = 'none';
          settings.style.display = 'block';
+         logoutBtn.style.display = 'block';
+         settingsBtn.style.display = 'none';
+         homeBtn.style.display = 'block';
          break;   
       default:
          return new Error('Invalid value was specified for viewName param');     
    }
 }
 
-function auth(username, password) {
-
-   if (typeof username != 'string') {
-      throw new Error('Username must be a string');
-   }
-   if (typeof password != 'string') {
-      throw new Error('Password must be a string');
-   }
-
-   let loginMsg = {
-      type: 'auth',
-      username: username,
-      password: password
-   }
-
-   chrome.runtime.sendMessage(loginMsg);
-}
-
-function AutoAuth() {
+function autoLogin() {
    let loginStatusMsg = {
-      type: 'autoAuth'
+      type: 'loginAuto'
    }
    chrome.runtime.sendMessage(loginStatusMsg, (res) => {
       if (res.isLoggedIn) {
@@ -72,22 +60,40 @@ function AutoAuth() {
    });
 }
 
+function login(username, password) {
+
+   if (typeof username != 'string') {
+      throw new Error('Username must be a string');
+   }
+   if (typeof password != 'string') {
+      throw new Error('Password must be a string');
+   }
+
+   let loginMsg = {
+      type: 'login',
+      username: username,
+      password: password
+   }
+
+   chrome.runtime.sendMessage(loginMsg);
+}
+
+function logout() {
+   let logoutMsg = {
+      type: 'logout'
+   }
+   console.log('running');
+   chrome.runtime.sendMessage(logoutMsg);
+}
+
 function getSwaps() {
    let getSwapMsg = {
       type: 'getSwaps'
    }
    chrome.runtime.sendMessage(getSwapMsg, (res) => {
 
-      let swaps = [];
-/* swaps.push({
-   domain: 'google.com',
-   token: 'fdanjvda',
-   type: 'password',
-   authId: 'Ab2C'
-}); */
-      swaps = res;
-      console.log(swaps);
-      console.log(res);
+      let swaps = res;
+
       swaps.forEach(swap => {
 
          let swapWrapper = document.createElement('div');
@@ -137,8 +143,12 @@ chrome.runtime.onMessage.addListener(
             switchView('main');
             break;
 
+         case 'authLogoutSuccess':
+            switchView('login');
+            console.log('logged out');
+            break;
+         
          case 'authJwtRefreshFail':
-            console.log('ohh herere')
             switchView('login');
             break;
 
@@ -153,20 +163,28 @@ chrome.runtime.onMessage.addListener(
          case 'ioSwapSubmitted':
             swaps.push(opts);
             break;
-                 
+         
       }
    }
 );
 switchView('login');
 
-AutoAuth()
-console.log('yo')
+autoLogin()
 getSwaps();
 
 
 document.getElementById('loginBtn').addEventListener(
    'click', () => {
-      auth(document.getElementById('usernameInput').value, document.getElementById('passwordInput').value);
+      login(document.getElementById('usernameInput').value, document.getElementById('passwordInput').value);
    }
 )
 
+document.getElementById('btnLogout').addEventListener('click', logout);
+
+document.getElementById('btnSettings').addEventListener('click', () => {
+   switchView('settings');
+});
+
+document.getElementById('btnHome').addEventListener('click', () => {
+   switchView('main');
+})

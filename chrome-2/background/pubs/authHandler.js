@@ -17,6 +17,8 @@ class AuthHandler extends Publisher {
          'authLoginFail', 
          'authLoginPending',
          'authLoginSuccess',
+         'authLogoutFail',
+         'authLogoutSuccess',
          'authJwtRefreshSuccess',
          'authJwtRefreshFail',
       ]);
@@ -35,10 +37,6 @@ class AuthHandler extends Publisher {
          if (res.refreshToken) {
             super.notify('authLoginSuccess', null);
             this.#refresh();
-         } else {
-            super.notify('authLoginFail', {
-               msg: 'No refreshToken found in storage'
-            });
          }
       });
    }
@@ -73,6 +71,25 @@ class AuthHandler extends Publisher {
          });
       });
    }
+
+   logout() {
+      chrome.storage.local.get(['refreshToken'], (res) => {
+
+         /* If there was no refreshToken, notify of error */
+         if (typeof res.refreshToken != 'string') {
+            super.notify('authLogoutFail', {
+               msg: 'RefreshToken not found in storage'
+            });
+            return;
+         } 
+
+         /* Otherwise, delete refreshToken and notify */
+         chrome.storage.local.remove(['refreshToken']);
+         chrome.storage.local.remove(['jwt']);
+         super.notify('authLogoutSuccess');
+      });
+   }
+
 
    #refresh() {
       chrome.storage.local.get(['refreshToken'], (res) => {
