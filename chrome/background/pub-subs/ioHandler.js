@@ -52,6 +52,7 @@ class IoHandler extends PubSub {
 
 	#submitSwap(swap) {
 		if (this.#socket === null) {
+			
 			return new Error('No connection to swapman');
 		}
 		try {
@@ -75,7 +76,7 @@ class IoHandler extends PubSub {
 	}
 
 	#connect() {
-
+		
 		/* If already connected, don't do anything */
 		if (this.#socket != null) {
 			console.log('socket is not null')
@@ -84,13 +85,15 @@ class IoHandler extends PubSub {
 
 		chrome.storage.local.get(['jwt'], (storage) => {
 
-         if (typeof storage.jwt != 'string') {
-            return new Error('Cannot connect without a jwt');
-         }
+			if (typeof storage.jwt != 'string') {
+				return new Error('Cannot connect without a jwt');
+			}
 
-         this.#socket = io.connect(services.swap.url, {
-            query: storage
+			this.#socket = io.connect(services.swap.url, {
+				query: storage
 			});
+			console.log(services.swap.url);
+
 			this.#socket.on('connectionNew', () => {
 				super.notify('ioNewTrustedConn', null);
 			});

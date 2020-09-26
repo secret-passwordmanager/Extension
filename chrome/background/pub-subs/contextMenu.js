@@ -47,53 +47,53 @@ class ContextMenu extends PubSub {
          username: '2',
          email: '3'
       }
-      chrome.contextMenus.removeAll(function() {
-         chrome.contextMenus.create({
-            id: credTypes.password,
-            title: "Password",
-            visible: true,
-            contexts: ["editable"]
-         });
-         // chrome.contextMenus.create({
-         //    id: credTypes.creditCard,
-         //    title: 'Credit Card',
-         //    visible: true,
-         //    contexts: ["editable"]
-         // });
-         chrome.contextMenus.create({
-            id: credTypes.username,
-            title: 'Username',
-            visible: true,
-            contexts: ["editable"]
-         });
-         chrome.contextMenus.create({
-            id: credTypes.email,
-            title: 'Email',
-            visible: true,
-            contexts: ["editable"]
-         });
-      
-         chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-            let token = '';
-            let type = '';
-            let domain = new URL(tab.url).hostname;
-            switch (info.menuItemId) {
-               case credTypes.password:
-                  token = genToken.password();
-                  type = 'password';
-                  break;
-               case credTypes.username:
-                  token = genToken.username();
-                  type = 'username';
-                  break;
-               case credTypes.email:
-                  token = genToken.email();
-                  type = 'email';
-                  break;
-            }
-            this.#newSwap(token, type, domain);
-         });
+
+      chrome.contextMenus.create({
+         id: credTypes.password,
+         title: "Password",
+         visible: true,
+         contexts: ["editable"]
       });
+      // chrome.contextMenus.create({
+      //    id: credTypes.creditCard,
+      //    title: 'Credit Card',
+      //    visible: true,
+      //    contexts: ["editable"]
+      // });
+      chrome.contextMenus.create({
+         id: credTypes.username,
+         title: 'Username',
+         visible: true,
+         contexts: ["editable"]
+      });
+      chrome.contextMenus.create({
+         id: credTypes.email,
+         title: 'Email',
+         visible: true,
+         contexts: ["editable"]
+      });
+   
+      chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+         let token = '';
+         let type = '';
+         let domain = new URL(tab.url).hostname;
+         switch (info.menuItemId) {
+            case credTypes.password:
+               token = genToken.password();
+               type = 'password';
+               break;
+            case credTypes.username:
+               token = genToken.username();
+               type = 'username';
+               break;
+            case credTypes.email:
+               token = genToken.email();
+               type = 'email';
+               break;
+         }
+         this.#newSwap(token, type, domain);
+      });
+
    }
 
    /**

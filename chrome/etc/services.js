@@ -4,9 +4,13 @@
  * Description. @services holds functions that
  * make external calls to our api
  */
+
+
 var services = {};
+services.baseUrl = 'http://73.66.169.37:8080';
+
 services.auth = {
-   url: 'http://localhost:8080/auth',
+   url: '/auth',
 
    /**
     * Description. Makes a request to Secret's auth server
@@ -17,7 +21,7 @@ services.auth = {
     * @return {undefined} Returns void
     */
    login: (username, password) => {
-      return fetch(services.auth.url + '/login', {
+      return fetch(services.baseUrl + services.auth.url + '/login', {
 
          method: 'POST',
          headers: {
@@ -41,7 +45,7 @@ services.auth = {
     * Grab and store a new JWT using the refreshToken
     */
    refresh: (refreshToken) => {     
-      return fetch(services.auth.url + '/refresh', {
+      return fetch(services.baseUrl + services.auth.url + '/refresh', {
          method: 'POST',
          headers: {
             'content-type': 'application/json'
@@ -54,10 +58,10 @@ services.auth = {
          if (resp.ok) {
             return resp.json();
          }
-      })
+      });
    }
 };
 
 services.swap = {
-   url: 'http://localhost:8003/Untrusted'
-}
+   url: services.baseUrl + '/Untrusted'
+};

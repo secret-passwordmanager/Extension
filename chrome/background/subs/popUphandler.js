@@ -83,6 +83,12 @@ class PopUpHandler extends Subscriber {
             switch(request.type) {
          
                /**
+                * Description. If the user wants to change their ip
+                */
+               case 'editIp':
+                  services.baseUrl = request.ip;
+                  break;
+               /**
                 * Description. popup.js will emit this event when a user clicks the 
                 * login button.
                 */
@@ -116,6 +122,7 @@ class PopUpHandler extends Subscriber {
                      msg:'received logoutMsg'
                   });
                   break;
+
                /**
                 * Description. If the type did match any of the previous cases,
                 * just return a response with error set to true and an 
