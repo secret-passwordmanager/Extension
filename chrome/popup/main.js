@@ -6,7 +6,7 @@
  */
 
 //////////////////////////////////////////////
-////////////////// Runtime ///////////////////
+////////////// Message Handler ///////////////
 //////////////////////////////////////////////
 
 /* Listen for certain events from the background */
@@ -29,30 +29,22 @@ chrome.runtime.onMessage.addListener(
             case 'authJwtRefreshFail':
                 switchView('login');
                 break;
-    
-            case 'ioSwapApproved':
-                swaps.splice(swaps.indexOf(request.opts), 1);
-                break;
-    
-            case 'ioSwapDenied':
-                swaps.splice(swaps.indexOf(request.opts), 1);
-                break;
-    
-            case 'ioSwapSubmitted':
-                swaps.push(opts);
+            
+            case 'ioSwapsPending':
+                console.log(request);
+                request.opts.forEach(swap => {
+                    console.log('swaps:');
+                    console.log(swap);
+                    displaySwap(swap);
+                });
                 break;
         }
     }
 );
 
- /* Default to login when started */
- switchView('login');
- 
- /* Try to auto login when started */
- autoLogin();
-
- /* Get all pending swaps when started */
- getSwaps();
+//////////////////////////////////////////////
+/////////////// Event Listeners //////////////
+//////////////////////////////////////////////
  
  /* Make login button login */
  document.getElementById('loginBtn').addEventListener(
@@ -80,3 +72,12 @@ chrome.runtime.onMessage.addListener(
  document.getElementById('btnIp').addEventListener('click', () => {
     editIp(document.getElementById('inputIp').value);
  });
+
+  /* Default to login when started */
+  switchView('login');
+ 
+  /* Try to auto login when started */
+  autoLogin();
+ 
+  /* Get all pending swaps when started */
+  getSwaps();

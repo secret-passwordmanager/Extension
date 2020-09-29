@@ -7,7 +7,7 @@
 
 
 var services = {};
-services.baseUrl = 'http://73.66.169.37:8080';
+services.baseUrl = 'http://localhost:8080';
 
 services.auth = {
    url: '/auth',

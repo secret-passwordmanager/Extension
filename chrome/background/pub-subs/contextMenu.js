@@ -76,7 +76,19 @@ class ContextMenu extends PubSub {
       chrome.contextMenus.onClicked.addListener(async (info, tab) => {
          let token = '';
          let type = '';
-         let domain = new URL(tab.url).hostname;
+         let domain;
+
+
+         /* Raza's code that removes www */
+         var match
+         if (match = tab.url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)/im)) {
+            domain = match[1]
+            if (match = domain.match(/^[^\.]+\.(.+\..+)$/)) {
+               domain = match[1]
+            }
+         }
+         console.log(domain);
+
          switch (info.menuItemId) {
             case credTypes.password:
                token = genToken.password();

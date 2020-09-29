@@ -10,7 +10,6 @@
 class PopUpHandler extends Subscriber {
 
    #auth = false;
-   #swaps = [];
 
    constructor() {
       /* Singleton design pattern */
@@ -53,22 +52,6 @@ class PopUpHandler extends Subscriber {
          case 'authLogoutSuccess':
             this.#auth = false;
             break;
-
-         case 'ioNewTrustedConn':
-            break;
-
-         case 'ioSwapApproved':
-            this.#swaps.splice(this.#swaps.indexOf(opts), 1);
-            break;
-
-         case 'ioSwapDenied':
-            this.#swaps.splice(this.#swaps.indexOf(opts), 1);
-            break;
-
-         case 'ioSwapSubmitted':
-            this.#swaps.push(opts);
-            break;
-              
       }
    }
 
@@ -81,7 +64,6 @@ class PopUpHandler extends Subscriber {
             }
             let authHandler = new AuthHandler();
             switch(request.type) {
-         
                /**
                 * Description. If the user wants to change their ip
                 */
@@ -111,10 +93,6 @@ class PopUpHandler extends Subscriber {
                   });
                   break;
 
-               case 'getSwaps':
-                  sendResponse(this.#swaps);
-                  break;
-
                case 'logout':
                   authHandler.logout();
                   sendResponse({
@@ -122,7 +100,9 @@ class PopUpHandler extends Subscriber {
                      msg:'received logoutMsg'
                   });
                   break;
-
+               
+               case 'getSwaps':
+                  new IoHandler().getSwaps();
                /**
                 * Description. If the type did match any of the previous cases,
                 * just return a response with error set to true and an 

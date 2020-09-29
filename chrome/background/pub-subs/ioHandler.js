@@ -17,9 +17,7 @@ class IoHandler extends PubSub {
 			'ioNewTrustedConn',
 			'ioNewTrustedDisconn',
 			'ioSwapQueueEmpty',
-			'ioSwapSubmitted',
-			'ioSwapApproved',
-			'ioSwapDenied',
+			'ioSwapsPending',
 			'ioSwapError'
 		]);
 		IoHandler._instance = this;
@@ -56,6 +54,7 @@ class IoHandler extends PubSub {
 			return new Error('No connection to swapman');
 		}
 		try {
+			console.log('submitting new swap');
 			this.#socket.emit('swapNew', swap);
 			super.notify('ioSwapSubmitted', swap);
 		}
@@ -103,10 +102,17 @@ class IoHandler extends PubSub {
 			this.#socket.on('swapEmpty', () => {
 				super.notify('ioSwapQueueEmpty');
 			});
+			this.#socket.on('swapsGot', (swaps) => {
+				console.log('got swaps');
+				console.log(swaps);
+				super.notify('ioSwapsPending', swaps);
+			})
+
 			this.#socket.on('err', (error) => {
 				super.notify('ioSwapError');
 				console.log(error);
 			});
+
 			this.#socket.on('swapApproved', (swap) => {
 			
 				super.notify('ioSwapApproved', swap);
@@ -119,7 +125,6 @@ class IoHandler extends PubSub {
 	}
 
 	#disconnect() {
-		 
 		/* If socket is already connected, return */
 		if (this.#socket == null) {
 			return;
@@ -129,6 +134,15 @@ class IoHandler extends PubSub {
 			this.#socket = null;
 		} catch(err) {
 			console.log('couldn\'t disconnect socket');
+		}
+	}
+
+
+	getSwaps() {
+		if (this.#socket == null) {
+			return [];
+		} else {
+			this.#socket.emit('swapsGet');
 		}
 	}
 }

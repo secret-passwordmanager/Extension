@@ -108,40 +108,34 @@ function getSwaps() {
    let getSwapMsg = {
       type: 'getSwaps'
    }
-   chrome.runtime.sendMessage(getSwapMsg, (swaps) => {
-
-      /* If there are no swaps, change the title */
-      if (swaps.length == 0) {
-         document.getElementById('swapsTitle').textContent = 'No Pending Swaps';
-      }
-
-      swaps.forEach(swap => {
-         let swapWrapper = document.createElement('div');
-         swapWrapper.classList.add('swapWrapper');
-
-         let subWrapper = document.createElement('div');
-         subWrapper.classList.add('swapSubWrapper');
-
-         let divDomain = document.createElement('div');
-         divDomain.innerHTML = '<h3>' + swap.domain +'</h3>';
-         divDomain.classList.add('swapDomain');
-         subWrapper.appendChild(divDomain);
-
-         let divType = document.createElement('div');
-         divType.innerHTML = '<h3>' + swap.type +'</h3>';
-         divType.classList.add('swapType');
-         subWrapper.appendChild(divType);
-
-         swapWrapper.appendChild(subWrapper);
-
-         let divAuthId = document.createElement('div');
-         divAuthId.innerHTML = '<h2>' + swap.authId +'</h2>';
-         divAuthId.classList.add('swapAuthId');
-         swapWrapper.appendChild(divAuthId);
-
-         document.getElementById('swaps').appendChild(swapWrapper);
-      });
-   });
+   chrome.runtime.sendMessage(getSwapMsg);
 }
 
 
+function displaySwap(swap) {
+
+   let swapWrapper = document.createElement('div');
+   swapWrapper.classList.add('swapWrapper');
+
+   let subWrapper = document.createElement('div');
+   subWrapper.classList.add('swapSubWrapper');
+
+   let divDomain = document.createElement('div');
+   divDomain.innerHTML = '<h3>' + swap.domain +'</h3>';
+   divDomain.classList.add('swapDomain');
+   subWrapper.appendChild(divDomain);
+
+   let divType = document.createElement('div');
+   divType.innerHTML = '<h3>' + swap.type +'</h3>';
+   divType.classList.add('swapType');
+   subWrapper.appendChild(divType);
+
+   swapWrapper.appendChild(subWrapper);
+
+   let divAuthId = document.createElement('div');
+   divAuthId.innerHTML = '<h2>' + swap.authId +'</h2>';
+   divAuthId.classList.add('swapAuthId');
+   swapWrapper.appendChild(divAuthId);
+
+   document.getElementById('swaps').appendChild(swapWrapper);
+}
